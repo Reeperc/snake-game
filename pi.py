@@ -6,13 +6,16 @@ class SnakeGame:
         self.root = root
         self.root.title("Snake Game")
         self.root.resizable(False, False)
-        self.canvas = tk.Canvas(root, width=600, height=600, bg="black")
+        self.canvas_size = 800  # Taille de la fenêtre
+        self.cell_size = 40     # Taille d'une cellule
+        self.grid_count = self.canvas_size // self.cell_size  # Nombre de cellules par ligne/colonne
+        self.canvas = tk.Canvas(root, width=self.canvas_size, height=self.canvas_size, bg="black")
         self.canvas.pack()
 
         self.score = 0
-        self.speed = 100
+        self.speed = 150
         self.direction = 'Right'
-        self.snake = [(20, 20), (20, 40), (20, 60)]
+        self.snake = [(40, 40), (40, 80), (40, 120)]  # Positions initiales
         self.food = None
         self.game_running = True
         self.paused = False
@@ -23,28 +26,28 @@ class SnakeGame:
         self.update_snake()
 
     def create_objects(self):
-        # Draw grid
-        for i in range(0, 600, 20):
-            self.canvas.create_line([(i, 0), (i, 600)], fill="gray")
-            self.canvas.create_line([(0, i), (600, i)], fill="gray")
+        # Dessine la grille
+        for i in range(0, self.canvas_size, self.cell_size):
+            self.canvas.create_line([(i, 0), (i, self.canvas_size)], fill="gray")
+            self.canvas.create_line([(0, i), (self.canvas_size, i)], fill="gray")
         
-        # Display score and high score
-        self.canvas.create_text(50, 10, text=f"Score: {self.score}", tag="score", fill="white", font=('Arial', 14))
-        self.canvas.create_text(550, 10, text=f"High Score: {self.high_score}", tag="high_score", fill="white", font=('Arial', 14))
+        # Affiche les scores
+        self.canvas.create_text(70, 20, text=f"Score: {self.score}", tag="score", fill="white", font=('Arial', 16))
+        self.canvas.create_text(self.canvas_size - 100, 20, text=f"High Score: {self.high_score}", tag="high_score", fill="white", font=('Arial', 16))
         
-        # Draw snake
+        # Dessine le serpent
         for segment in self.snake:
-            self.canvas.create_rectangle(segment[0], segment[1], segment[0] + 20, segment[1] + 20, fill="green", tag="snake")
+            self.canvas.create_rectangle(segment[0], segment[1], segment[0] + self.cell_size, segment[1] + self.cell_size, fill="green", tag="snake")
         
-        # Create food
+        # Ajoute la nourriture
         self.create_food()
 
     def create_food(self):
         if self.food:
             self.canvas.delete(self.food)
-        x = random.randint(0, 29) * 20
-        y = random.randint(0, 29) * 20
-        self.food = self.canvas.create_rectangle(x, y, x + 20, y + 20, fill="red", tag="food")
+        x = random.randint(0, self.grid_count - 1) * self.cell_size
+        y = random.randint(0, self.grid_count - 1) * self.cell_size
+        self.food = self.canvas.create_rectangle(x, y, x + self.cell_size, y + self.cell_size, fill="red", tag="food")
 
     def bind_keys(self):
         self.root.bind("<Up>", self.change_direction)
@@ -69,13 +72,13 @@ class SnakeGame:
         if self.game_running and not self.paused:
             head_x, head_y = self.snake[-1]
             if self.direction == 'Up':
-                new_head = (head_x, head_y - 20)
+                new_head = (head_x, head_y - self.cell_size)
             elif self.direction == 'Down':
-                new_head = (head_x, head_y + 20)
+                new_head = (head_x, head_y + self.cell_size)
             elif self.direction == 'Left':
-                new_head = (head_x - 20, head_y)
+                new_head = (head_x - self.cell_size, head_y)
             elif self.direction == 'Right':
-                new_head = (head_x + 20, head_y)
+                new_head = (head_x + self.cell_size, head_y)
 
             self.snake.append(new_head)
             if self.check_collision(new_head):
@@ -89,36 +92,36 @@ class SnakeGame:
                 self.canvas.itemconfigure("high_score", text=f"High Score: {self.high_score}")
                 self.create_food()
                 if self.score % 5 == 0:
-                    self.speed = max(10, self.speed - 10)
+                    self.speed = max(50, self.speed - 10)
             else:
                 self.canvas.delete(self.snake[0])
                 self.snake.pop(0)
 
-            self.canvas.create_rectangle(new_head[0], new_head[1], new_head[0] + 20, new_head[1] + 20, fill="green", tag="snake")
+            self.canvas.create_rectangle(new_head[0], new_head[1], new_head[0] + self.cell_size, new_head[1] + self.cell_size, fill="green", tag="snake")
             self.root.after(self.speed, self.update_snake)
 
     def check_collision(self, head):
         x, y = head
-        if x < 0 or x >= 600 or y < 0 or y >= 600:
+        if x < 0 or x >= self.canvas_size or y < 0 or y >= self.canvas_size:
             return True
         if head in self.snake[:-1]:
             return True
         return False
 
     def check_food_collision(self, head):
-        return self.canvas.coords(self.food) == [head[0], head[1], head[0] + 20, head[1] + 20]
+        return self.canvas.coords(self.food) == [head[0], head[1], head[0] + self.cell_size, head[1] + self.cell_size]
 
     def end_game(self):
         self.game_running = False
-        self.canvas.create_text(300, 300, text="Game Over", fill="red", font=('Arial', 30))
-        self.canvas.create_text(300, 340, text="Press R to Restart", fill="white", font=('Arial', 20))
+        self.canvas.create_text(self.canvas_size // 2, self.canvas_size // 2, text="Game Over", fill="red", font=('Arial', 40))
+        self.canvas.create_text(self.canvas_size // 2, self.canvas_size // 2 + 50, text="Press R to Restart", fill="white", font=('Arial', 20))
 
     def restart_game(self, event):
         self.canvas.delete("all")
         self.score = 0
-        self.speed = 100
+        self.speed = 150
         self.direction = 'Right'
-        self.snake = [(20, 20), (20, 40), (20, 60)]
+        self.snake = [(40, 40), (40, 80), (40, 120)]
         self.food = None
         self.game_running = True
         self.create_objects()
