@@ -8,20 +8,35 @@ class SnakeGame:
         self.root.resizable(False, False)
         self.canvas = tk.Canvas(root, width=600, height=600, bg="black")
         self.canvas.pack()
+
         self.score = 0
         self.speed = 100
         self.direction = 'Right'
         self.snake = [(20, 20), (20, 40), (20, 60)]
         self.food = None
+        self.game_running = True
+        self.paused = False
+        self.high_score = 0
+
         self.create_objects()
         self.bind_keys()
-        self.game_running = True
         self.update_snake()
 
     def create_objects(self):
+        # Draw grid
+        for i in range(0, 600, 20):
+            self.canvas.create_line([(i, 0), (i, 600)], fill="gray")
+            self.canvas.create_line([(0, i), (600, i)], fill="gray")
+        
+        # Display score and high score
         self.canvas.create_text(50, 10, text=f"Score: {self.score}", tag="score", fill="white", font=('Arial', 14))
+        self.canvas.create_text(550, 10, text=f"High Score: {self.high_score}", tag="high_score", fill="white", font=('Arial', 14))
+        
+        # Draw snake
         for segment in self.snake:
             self.canvas.create_rectangle(segment[0], segment[1], segment[0] + 20, segment[1] + 20, fill="green", tag="snake")
+        
+        # Create food
         self.create_food()
 
     def create_food(self):
@@ -36,6 +51,8 @@ class SnakeGame:
         self.root.bind("<Down>", self.change_direction)
         self.root.bind("<Left>", self.change_direction)
         self.root.bind("<Right>", self.change_direction)
+        self.root.bind("<p>", self.toggle_pause)
+        self.root.bind("<r>", self.restart_game)
 
     def change_direction(self, event):
         new_direction = event.keysym
@@ -43,8 +60,13 @@ class SnakeGame:
         if new_direction != all_directions.get(self.direction):
             self.direction = new_direction
 
+    def toggle_pause(self, event):
+        self.paused = not self.paused
+        if not self.paused:
+            self.update_snake()
+
     def update_snake(self):
-        if self.game_running:
+        if self.game_running and not self.paused:
             head_x, head_y = self.snake[-1]
             if self.direction == 'Up':
                 new_head = (head_x, head_y - 20)
@@ -62,7 +84,9 @@ class SnakeGame:
 
             if self.check_food_collision(new_head):
                 self.score += 1
+                self.high_score = max(self.high_score, self.score)
                 self.canvas.itemconfigure("score", text=f"Score: {self.score}")
+                self.canvas.itemconfigure("high_score", text=f"High Score: {self.high_score}")
                 self.create_food()
                 if self.score % 5 == 0:
                     self.speed = max(10, self.speed - 10)
@@ -88,17 +112,6 @@ class SnakeGame:
         self.game_running = False
         self.canvas.create_text(300, 300, text="Game Over", fill="red", font=('Arial', 30))
         self.canvas.create_text(300, 340, text="Press R to Restart", fill="white", font=('Arial', 20))
-        self.root.bind("<r>", self.restart_game)
-
-    def create_objects(self):
-        for i in range(0, 600, 20):
-            self.canvas.create_line([(i, 0), (i, 600)], fill="gray")
-            self.canvas.create_line([(0, i), (600, i)], fill="gray")
-        self.canvas.create_text(50, 10, text=f"Score: {self.score}", tag="score", fill="white", font=('Arial', 14))
-        for segment in self.snake:
-            self.canvas.create_rectangle(segment[0], segment[1], segment[0] + 20, segment[1] + 20, fill="green", tag="snake")
-        self.create_food()
-
 
     def restart_game(self, event):
         self.canvas.delete("all")
