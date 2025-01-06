@@ -90,6 +90,16 @@ class SnakeGame:
         self.canvas.create_text(300, 340, text="Press R to Restart", fill="white", font=('Arial', 20))
         self.root.bind("<r>", self.restart_game)
 
+    def create_objects(self):
+        for i in range(0, 600, 20):
+            self.canvas.create_line([(i, 0), (i, 600)], fill="gray")
+            self.canvas.create_line([(0, i), (600, i)], fill="gray")
+        self.canvas.create_text(50, 10, text=f"Score: {self.score}", tag="score", fill="white", font=('Arial', 14))
+        for segment in self.snake:
+            self.canvas.create_rectangle(segment[0], segment[1], segment[0] + 20, segment[1] + 20, fill="green", tag="snake")
+        self.create_food()
+
+
     def restart_game(self, event):
         self.canvas.delete("all")
         self.score = 0
